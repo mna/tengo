@@ -208,7 +208,7 @@ func (c *Compiled) Run() error {
 	defer c.lock.Unlock()
 
 	v := NewVM(c.bytecode, c.globals, c.maxAllocs)
-	return v.Run()
+	return v.Run(context.Background())
 }
 
 // RunContext is like Run but includes a context.
@@ -231,7 +231,7 @@ func (c *Compiled) RunContext(ctx context.Context) (err error) {
 				}
 			}
 		}()
-		ch <- v.Run()
+		ch <- v.Run(ctx)
 	}()
 
 	select {

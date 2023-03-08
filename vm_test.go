@@ -1,6 +1,7 @@
 package tengo_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -189,7 +190,7 @@ func TestAssignment(t *testing.T) {
 	expectRun(t, `a := 1; func() { a := 2 }(); out = a`, nil, 1) // "a := 2" defines a new local variable 'a'
 	expectRun(t, `a := 1; func() { b := 2; out = b }()`, nil, 2)
 	expectRun(t, `
-out = func() { 
+out = func() {
 	a := 2
 	func() {
 		a = 3 // captured from outer scope
@@ -201,8 +202,8 @@ out = func() {
 	expectRun(t, `
 func() {
 	a := 5
-	out = func() {  	
-		a := 4						
+	out = func() {
+		a := 4
 		return a
 	}()
 }()`, nil, 4)
@@ -226,15 +227,15 @@ func() {
 	expectError(t, `a /= 4`, nil, "unresolved reference")
 
 	expectRun(t, `
-f1 := func() { 
-	f2 := func() { 
+f1 := func() {
+	f2 := func() {
 		a := 1
 		a += 2    // it's a statement, not an expression
 		return a
-	}; 
-	
-	return f2(); 
-}; 
+	};
+
+	return f2();
+};
 
 out = f1();`, nil, 3)
 	expectRun(t, `f1 := func() { f2 := func() { a := 1; a += 4 - 2; return a }; return f2(); }; out = f1()`,
@@ -263,7 +264,7 @@ out = f1();`, nil, 3)
 			return c
 		}
 	}
-	
+
 	out = f1(3)(4)
 	`, nil, 11)
 
@@ -287,7 +288,7 @@ out = f1();`, nil, 3)
 	expectRun(t, `
 	f1 := func() {
 		a := 5
-	
+
 		return func() {
 			a += 3
 			return a
@@ -315,7 +316,7 @@ out = f1();`, nil, 3)
 			fn(seq[1])
 			fn(seq[2])
 		}
-	
+
 		foo := func(a) {
 			b := 0
 			it([1, 2, 3], func(x) {
@@ -323,7 +324,7 @@ out = f1();`, nil, 3)
 			})
 			return b
 		}
-	
+
 		out = foo(2)
 		`, nil, 5)
 
@@ -333,7 +334,7 @@ out = f1();`, nil, 3)
 			fn(seq[1])
 			fn(seq[2])
 		}
-	
+
 		foo := func(a) {
 			b := 0
 			it([1, 2, 3], func(x) {
@@ -341,7 +342,7 @@ out = f1();`, nil, 3)
 			})
 			return b
 		}
-	
+
 		out = foo(2)
 		`, nil, 12)
 
@@ -389,9 +390,9 @@ out = func() {
 	expectRun(t, `a := 1; a = "foo"; out = a`, nil, "foo")              // global
 	expectRun(t, `func() { a := 1; a = "foo"; out = a }()`, nil, "foo") // local
 	expectRun(t, `
-out = func() { 
+out = func() {
 	a := 5
-	return func() { 
+	return func() {
 		a = "foo"
 		return a
 	}()
@@ -872,7 +873,7 @@ func TestBuiltinFunction(t *testing.T) {
 		ARR{1, 2, 3, "a", "b"})
 	expectRun(t, `array := [1, 2, 3]; deleted := splice(array, 1, 1, "a", "b");
 				out = [deleted, array]`, nil, ARR{ARR{2}, ARR{1, "a", "b", 3}})
-	expectRun(t, `array := [1, 2, 3]; deleted := splice(array, 1); 
+	expectRun(t, `array := [1, 2, 3]; deleted := splice(array, 1);
 		out = [deleted, array]`, nil, ARR{ARR{2, 3}, ARR{1}})
 	expectRun(t, `out = []; splice(out, 0, 0, "a", "b")`, nil, ARR{"a", "b"})
 	expectRun(t, `out = []; splice(out, 0, 1, "a", "b")`, nil, ARR{"a", "b"})
@@ -1514,10 +1515,10 @@ func TestFunction(t *testing.T) {
 		f1 := func(a) {
 			return a * 2;
 		};
-	
+
 		return f1(a) * 3;
 	};
-	
+
 	out = f2(10);
 	`, nil, 60)
 
@@ -1536,7 +1537,7 @@ func TestFunction(t *testing.T) {
 		newAdder := func(x) {
 			return func(y) { return x + y };
 		};
-	
+
 		add2 := newAdder(2);
 		out = add2(5);
 		`, nil, 7)
@@ -1562,7 +1563,7 @@ func TestFunction(t *testing.T) {
 	add := func(a, b) { return a + b };
 	sub := func(a, b) { return a - b };
 	applyFunc := func(a, b, f) { return f(a, b) };
-	
+
 	out = applyFunc(applyFunc(2, 2, add), 3, sub);
 	`, nil, 1)
 
@@ -1647,16 +1648,16 @@ func TestFunction(t *testing.T) {
 
 	expectRun(t, `
 	g := 10;
-	
+
 	sum := func(a, b) {
 		c := a + b;
 		return c + g;
 	}
-	
+
 	outer := func() {
 		return sum(1, 2) + sum(3, 4) + g;
 	}
-	
+
 	out = outer() + g
 	`, nil, 50)
 
@@ -1679,7 +1680,7 @@ func TestFunction(t *testing.T) {
 		f1 := func(a, b) {
 			return func(c) { return a + b + c };
 		};
-	
+
 		f2 := f1(1, 2);
 		out = f2(8);
 		`, nil, 11)
@@ -1981,21 +1982,21 @@ out = func() {
 		b := func() {
 			return is_callable(a) ? a(8) : a
 		}()
-		if is_error(b) { 
-			return b 
-		} else if !is_undefined(b) { 
+		if is_error(b) {
+			return b
+		} else if !is_undefined(b) {
 			return immutable(b)
 		}
 	}
-	
+
 	a = 3
 	if a {
 		b := func() {
 			return is_callable(a) ? a(9) : a
 		}()
-		if is_error(b) { 
-			return b 
-		} else if !is_undefined(b) { 
+		if is_error(b) {
+			return b
+		} else if !is_undefined(b) {
 			return immutable(b)
 		}
 	}
@@ -2892,7 +2893,7 @@ func TestReturn(t *testing.T) {
 	expectRun(t, `out = func() { return 2 * 5; return 9 }()`, nil, 10)
 	expectRun(t, `out = func() { 9; return 2 * 5; return 9 }()`, nil, 10)
 	expectRun(t, `
-	out = func() { 
+	out = func() {
 		if (10 > 1) {
 			if (10 > 1) {
 				return 10;
@@ -3321,46 +3322,46 @@ func testEnumModule(t *testing.T, input string, expected interface{}) {
 func TestSrcModEnum(t *testing.T) {
 	expectRun(t, `
 x := import("enum")
-out = x.all([1, 2, 3], func(_, v) { return v >= 1 }) 
+out = x.all([1, 2, 3], func(_, v) { return v >= 1 })
 `, Opts().Stdlib(), true)
 	expectRun(t, `
 x := import("enum")
-out = x.all([1, 2, 3], func(_, v) { return v >= 2 }) 
+out = x.all([1, 2, 3], func(_, v) { return v >= 2 })
 `, Opts().Stdlib(), false)
 
 	expectRun(t, `
 x := import("enum")
-out = x.any([1, 2, 3], func(_, v) { return v >= 1 }) 
+out = x.any([1, 2, 3], func(_, v) { return v >= 1 })
 `, Opts().Stdlib(), true)
 	expectRun(t, `
 x := import("enum")
-out = x.any([1, 2, 3], func(_, v) { return v >= 2 }) 
+out = x.any([1, 2, 3], func(_, v) { return v >= 2 })
 `, Opts().Stdlib(), true)
 
 	expectRun(t, `
 x := import("enum")
-out = x.chunk([1, 2, 3], 1) 
+out = x.chunk([1, 2, 3], 1)
 `, Opts().Stdlib(), ARR{ARR{1}, ARR{2}, ARR{3}})
 	expectRun(t, `
 x := import("enum")
-out = x.chunk([1, 2, 3], 2) 
+out = x.chunk([1, 2, 3], 2)
 `, Opts().Stdlib(), ARR{ARR{1, 2}, ARR{3}})
 	expectRun(t, `
 x := import("enum")
-out = x.chunk([1, 2, 3], 3) 
+out = x.chunk([1, 2, 3], 3)
 `, Opts().Stdlib(), ARR{ARR{1, 2, 3}})
 	expectRun(t, `
 x := import("enum")
-out = x.chunk([1, 2, 3], 4) 
+out = x.chunk([1, 2, 3], 4)
 `, Opts().Stdlib(), ARR{ARR{1, 2, 3}})
 	expectRun(t, `
 x := import("enum")
-out = x.chunk([1, 2, 3, 4, 5, 6], 2) 
+out = x.chunk([1, 2, 3, 4, 5, 6], 2)
 `, Opts().Stdlib(), ARR{ARR{1, 2}, ARR{3, 4}, ARR{5, 6}})
 
 	expectRun(t, `
 x := import("enum")
-out = x.at([1, 2, 3], 0) 
+out = x.at([1, 2, 3], 0)
 `, Opts().Stdlib(), 1)
 }
 
@@ -3557,7 +3558,7 @@ iter := func(n, max) {
 	iter(n+1, max)
 }
 iter(0, 9999)
-out = c 
+out = c
 `, nil, 9999)
 }
 
@@ -3854,7 +3855,7 @@ func traceCompileRun(
 
 	v = tengo.NewVM(bytecode, globals, maxAllocs)
 
-	err = v.Run()
+	err = v.Run(context.Background())
 	{
 		res = make(map[string]tengo.Object)
 		for name := range symbols {
