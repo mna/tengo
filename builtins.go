@@ -1,5 +1,7 @@
 package tengo
 
+import "fmt"
+
 var builtinFuncs = []*BuiltinFunction{
 	{
 		Name:  "len",
@@ -124,6 +126,10 @@ var builtinFuncs = []*BuiltinFunction{
 	{
 		Name:  "range",
 		Value: builtinRange,
+	},
+	{
+		Name:  "panic",
+		Value: builtinPanic,
 	},
 }
 
@@ -327,7 +333,7 @@ func builtinLen(args ...Object) (Object, error) {
 	}
 }
 
-//range(start, stop[, step])
+// range(start, stop[, step])
 func builtinRange(args ...Object) (Object, error) {
 	numArgs := len(args)
 	if numArgs < 2 || numArgs > 3 {
@@ -677,4 +683,20 @@ func builtinSplice(args ...Object) (Object, error) {
 
 	// return deleted items
 	return &Array{Value: deleted}, nil
+}
+
+func builtinPanic(args ...Object) (Object, error) {
+	if len(args) != 1 {
+		return nil, ErrWrongNumArguments
+	}
+	switch v := args[0].(type) {
+	case *Error:
+		return nil, fmt.Errorf("panic: %v", ToInterface(v.Value))
+	default:
+		return nil, ErrInvalidArgumentType{
+			Name:     "first",
+			Expected: "error",
+			Found:    args[0].TypeName(),
+		}
+	}
 }
