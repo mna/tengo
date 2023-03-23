@@ -1,6 +1,7 @@
 package stdlib
 
 import (
+	crand "crypto/rand"
 	"math/rand"
 
 	"github.com/d5/tengo/v2"
@@ -50,6 +51,28 @@ var randModule = map[string]tengo.Object{
 				}
 			}
 			res, err := rand.Read(y1.Value)
+			if err != nil {
+				ret = wrapError(err)
+				return
+			}
+			return &tengo.Int{Value: int64(res)}, nil
+		},
+	},
+	"crypto_read": &tengo.UserFunction{
+		Name: "crypto_read",
+		Value: func(args ...tengo.Object) (ret tengo.Object, err error) {
+			if len(args) != 1 {
+				return nil, tengo.ErrWrongNumArguments
+			}
+			y1, ok := args[0].(*tengo.Bytes)
+			if !ok {
+				return nil, tengo.ErrInvalidArgumentType{
+					Name:     "first",
+					Expected: "bytes",
+					Found:    args[0].TypeName(),
+				}
+			}
+			res, err := crand.Read(y1.Value)
 			if err != nil {
 				ret = wrapError(err)
 				return
